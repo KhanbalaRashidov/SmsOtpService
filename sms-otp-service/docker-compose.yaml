@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: sms-otp-postgres
+    environment:
+      POSTGRES_DB: sms_otp_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sms-otp-network
+  sms-otp-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sms-otp-service
+    environment:
+      # Server config
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8080
+
+      # Database config
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: sms_otp_db
+      DB_SSL_MODE: disable
+
+      # SMS config
+      SMS_PROVIDER: mock
+      SMS_SENDER_NAME: OTPService
+
+      # OTP config
+      OTP_VALIDITY_MINUTES: 5
+      OTP_RATE_LIMIT_MINUTES: 10
+      OTP_MAX_PER_PERIOD: 3
+      OTP_CODE_LENGTH: 6
+      OTP_MAX_ATTEMPTS: 3
+      OTP_CLEANUP_INTERVAL: 1h
+
+      # Logger config
+      LOG_LEVEL: info
+      LOG_FORMAT: json
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - sms-otp-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sms-otp.rule=Host(`localhost`)"
+      - "traefik.http.services.sms-otp.loadbalancer.server.port=8080"
+
+volumes:
+  postgres_data:
+
+networks:
+  sms-otp-network:
+    driver: bridge

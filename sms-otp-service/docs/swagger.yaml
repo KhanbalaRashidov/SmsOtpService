@@ -1,0 +1,236 @@
+basePath: /
+definitions:
+  dto.ErrorResponse:
+    properties:
+      code:
+        type: string
+      error:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.HealthResponse:
+    properties:
+      services:
+        additionalProperties:
+          type: string
+        type: object
+      status:
+        type: string
+      timestamp:
+        type: string
+      version:
+        type: string
+    type: object
+  dto.ResendOTPRequest:
+    properties:
+      phone_number:
+        type: string
+      purpose:
+        $ref: '#/definitions/entities.OTPPurpose'
+    required:
+    - phone_number
+    type: object
+  dto.ResendOTPResponse:
+    properties:
+      expires_in:
+        type: integer
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.SendOTPRequest:
+    properties:
+      phone_number:
+        type: string
+      purpose:
+        $ref: '#/definitions/entities.OTPPurpose'
+    required:
+    - phone_number
+    type: object
+  dto.SendOTPResponse:
+    properties:
+      expires_in:
+        type: integer
+      id:
+        type: string
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.VerifyOTPRequest:
+    properties:
+      code:
+        type: string
+      phone_number:
+        type: string
+      purpose:
+        $ref: '#/definitions/entities.OTPPurpose'
+    required:
+    - code
+    - phone_number
+    type: object
+  dto.VerifyOTPResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+      verified_at:
+        type: string
+    type: object
+  entities.OTPPurpose:
+    enum:
+    - verification
+    - login
+    - reset
+    type: string
+    x-enum-varnames:
+    - PurposeVerification
+    - PurposeLogin
+    - PurposeReset
+host: localhost:8080
+info:
+  contact:
+    email: support@sms-otp-service.com
+    name: API Support
+  description: Professional SMS OTP service with Clean Architecture
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: SMS OTP Service API
+  version: "1.0"
+paths:
+  /api/v1/otp/resend:
+    post:
+      consumes:
+      - application/json
+      description: Resend OTP to phone number
+      parameters:
+      - description: Resend OTP request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ResendOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ResendOTPResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Resend OTP
+      tags:
+      - OTP
+  /api/v1/otp/send:
+    post:
+      consumes:
+      - application/json
+      description: Send OTP to phone number
+      parameters:
+      - description: Send OTP request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SendOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SendOTPResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Send OTP
+      tags:
+      - OTP
+  /api/v1/otp/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verify OTP code
+      parameters:
+      - description: Verify OTP request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VerifyOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.VerifyOTPResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Verify OTP
+      tags:
+      - OTP
+  /health:
+    get:
+      description: Get health status of the service
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.HealthResponse'
+      summary: Health check
+      tags:
+      - Health
+  /ready:
+    get:
+      description: Check if service is ready to serve requests
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Readiness check
+      tags:
+      - Health
+schemes:
+- http
+- https
+swagger: "2.0"
